@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Статус сервера CS:S</title>
+    <style>
+        .status-card {
+            padding: 20px;
+            border-radius: 10px;
+            background: #2a2a2a;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+        }
+        .online { color: #4caf50; }
+        .offline { color: #f44336; }
+        .loading { color: #ff9800; }
+        #statusDot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="status-card">
+    <h3>🎮 Сервер CS:S</h3>
+    <div id="serverStatus">
+        <span id="statusDot" class="loading"></span>
+        <span id="statusText">Проверка...</span>
+    </div>
+    <div id="serverInfo" style="margin-top: 10px; font-size: 14px; opacity: 0.8;"></div>
+</div>
+
+<script>
+async function checkServer() {
+    const dot = document.getElementById('statusDot');
+    const text = document.getElementById('statusText');
+    const info = document.getElementById('serverInfo');
+    
+    // Меняем стиль на "загрузка"
+    dot.className = 'loading';
+    text.textContent = 'Проверка...';
+    info.textContent = '';
+    
+    try {
+        // Используем Steam API для получения информации о сервере
+        const response = await fetch(
+            `https://api.steampowered.com/ISteamApps/GetServersAtAddress/v1/?addr= babushacs.duckdns.org:27015`
+        );
+        
+        const data = await response.json();
+        
+        if (data.response && data.response.servers && data.response.servers.length > 0) {
+            const server = data.response.servers[0];
+            dot.className = 'online';
+            text.textContent = '🟢 Сервер онлайн';
+            info.innerHTML = `
+                <div>Игроки: ${server.players}/${server.max_players}</div>
+                <div>Карта: ${server.map || 'неизвестно'}</div>
+                <div>Игра: ${server.game || 'Counter-Strike: Source'}</div>
+            `;
+        } else {
+            dot.className = 'offline';
+            text.textContent = '🔴 Сервер оффлайн';
+            info.textContent = 'Не удалось найти сервер';
+        }
+    } catch (error) {
+        dot.className = 'offline';
+        text.textContent = '🔴 Ошибка проверки';
+        info.textContent = 'Попробуйте позже';
+        console.error('Ошибка:', error);
+    }
+}
+
+// Проверяем при загрузке и каждые 30 секунд
+checkServer();
+setInterval(checkServer, 30000);
+</script>
+
+</body>
+</html>
